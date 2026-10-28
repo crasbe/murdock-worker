@@ -14,10 +14,11 @@ if [ "$(id -u)" = 0 ]; then
         exit 1
     fi
 
-    # fix ownership of caches created by a previous uid
-    for dir in "${CCACHE_DIR}" "${GIT_CACHE_DIR}"; do
-        [ -n "$dir" ] || continue
-        mkdir -p "$dir"
+    # fix ownership of caches created by a previous uid (e.g. ccache, git
+    # cache, dlcache). /cache/redis is a separate volume owned by redis.
+    for dir in /cache/* /cache/.[!.]*; do
+        [ -e "$dir" ] || continue
+        [ "$dir" != /cache/redis ] || continue
         if [ "$(stat -c %u:%g "$dir")" != "$uid:$gid" ]; then
             chown -R "$uid:$gid" "$dir"
         fi
