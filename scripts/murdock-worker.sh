@@ -1,5 +1,31 @@
 #!/bin/sh
 
+# When started as root, run the jobs as the owner of this script on the host
+# (i.e. the owner of the murdock-worker checkout). Refuse to run the jobs as
+# root if the checkout is owned by root.
+if [ "$(id -u)" = 0 ]; then
+    uid=$(stat -c %u "$0")
+    gid=$(stat -c %g "$0")
+    if [ "$uid" = 0 ]; then
+        echo "murdock-worker.sh: error: scripts/murdock-worker.sh is owned by" \
+             "root on the host, refusing to run the jobs as root." \
+             "The jobs run as the owner of the murdock-worker checkout," \
+             "make sure it belongs to a dedicated user (e.g. murdock) (see README.md)" >&2
+        exit 1
+    fi
+
+    # fix ownership of caches created by a previous uid
+    for dir in "${CCACHE_DIR}" "${GIT_CACHE_DIR}"; do
+        [ -n "$dir" ] || continue
+        mkdir -p "$dir"
+        if [ "$(stat -c %u:%g "$dir")" != "$uid:$gid" ]; then
+            chown -R "$uid:$gid" "$dir"
+        fi
+    done
+
+    exec setpriv --reuid="$uid" --regid="$gid" --clear-groups "$0" "$@"
+fi
+
 # create passwd entry for current uid, fix HOME variable
 # only execute, if the current uid does not exist.
 if ! id $(id -u) >/dev/null 2>/dev/null; then
