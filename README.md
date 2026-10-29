@@ -35,8 +35,7 @@ The stack will include the following containers:
   sudo mkdir /srv/murdock-worker
   sudo chown murdock:murdock /srv/murdock-worker
   sudo -u murdock -s
-  cd /srv/murdock-worker
-  git clone https://github.com/RIOT-OS/murdock-worker .
+  git clone https://github.com/RIOT-OS/murdock-worker /srv/murdock-worker
   ```
   The jobs and the ccache redis run as the owner of the `scripts/murdock-worker.sh`
   and `scripts/redis-ccache.sh` scripts (e.g. the dedicated `murdock` user).
